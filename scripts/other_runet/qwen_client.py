@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import threading
 import time
 from dataclasses import dataclass
 from typing import Any
@@ -38,6 +39,8 @@ class QwenResponse:
 
 
 class QwenClient:
+    parallel_safe = False
+
     def __init__(
         self,
         *,
@@ -117,6 +120,116 @@ class QwenClient:
             error=None if parsed is not None else "json_parse_failed",
             elapsed_seconds=elapsed,
         )
+
+
+class NullQwenClient:
+    parallel_safe = True
+
+    def is_available(self, *, force: bool = False, ttl_seconds: float = 30.0) -> bool:
+        return False
+
+    def generate_json(
+        self,
+        *,
+        system_prompt: str,
+        user_prompt: str,
+        max_tokens: int = 512,
+        temperature: float = 0.1,
+    ) -> QwenResponse:
+        return QwenResponse(raw="", parsed=None, error="qwen_disabled", elapsed_seconds=0.0)
+
+    def health(self, *, force: bool = False) -> dict[str, Any]:
+        return {
+            "qwen_available": False,
+            "qwen_pool": [],
+            "qwen_pool_alive": 0,
+            "qwen_pool_total": 0,
+            "qwen_pool_alive_ports": [],
+        }
+
+
+class QwenPoolClient:
+    parallel_safe = True
+
+    def __init__(
+        self,
+        *,
+        host: str = DEFAULT_QWEN_HOST,
+        ports: list[int] | tuple[int, ...],
+        model: str = DEFAULT_MODEL_TAG,
+        timeout: float = 45.0,
+        connect_timeout: float = 3.0,
+    ) -> None:
+        clean_ports = [int(port) for port in ports if int(port) > 0]
+        if not clean_ports:
+            clean_ports = [DEFAULT_QWEN_PORT]
+        self.host = host
+        self.ports = tuple(dict.fromkeys(clean_ports))
+        self.clients = [
+            QwenClient(
+                host=host,
+                port=port,
+                model=model,
+                timeout=timeout,
+                connect_timeout=connect_timeout,
+            )
+            for port in self.ports
+        ]
+        self._locks = [threading.Lock() for _ in self.clients]
+        self._pick_lock = threading.Lock()
+        self._next_index = 0
+
+    def is_available(self, *, force: bool = False, ttl_seconds: float = 30.0) -> bool:
+        return any(client.is_available(force=force, ttl_seconds=ttl_seconds) for client in self.clients)
+
+    def alive_ports(self, *, force: bool = False, ttl_seconds: float = 30.0) -> list[int]:
+        alive: list[int] = []
+        for port, client in zip(self.ports, self.clients):
+            if client.is_available(force=force, ttl_seconds=ttl_seconds):
+                alive.append(port)
+        return alive
+
+    def health(self, *, force: bool = False) -> dict[str, Any]:
+        alive = self.alive_ports(force=force, ttl_seconds=0.0 if force else 30.0)
+        return {
+            "qwen_available": bool(alive),
+            "qwen_pool": list(self.ports),
+            "qwen_pool_alive": len(alive),
+            "qwen_pool_total": len(self.ports),
+            "qwen_pool_alive_ports": alive,
+        }
+
+    def generate_json(
+        self,
+        *,
+        system_prompt: str,
+        user_prompt: str,
+        max_tokens: int = 512,
+        temperature: float = 0.1,
+    ) -> QwenResponse:
+        picked = self._pick_available_client()
+        if picked is None:
+            return QwenResponse(raw="", parsed=None, error="qwen_unavailable", elapsed_seconds=0.0)
+        index, client = picked
+        with self._locks[index]:
+            return client.generate_json(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                max_tokens=max_tokens,
+                temperature=temperature,
+            )
+
+    def _pick_available_client(self) -> tuple[int, QwenClient] | None:
+        total = len(self.clients)
+        with self._pick_lock:
+            start = self._next_index
+            self._next_index = (self._next_index + 1) % total
+        for offset in range(total):
+            index = (start + offset) % total
+            client = self.clients[index]
+            if client.is_available():
+                return index, client
+        return None
 
 
 def _extract_json(text: str) -> dict[str, Any] | None:

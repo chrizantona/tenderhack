@@ -38,6 +38,7 @@ def create_app(
     qwen_model_path: str | None = None,
     qwen_host: str = "127.0.0.1",
     qwen_port: int = 8765,
+    qwen_pool: list[int] | None = None,
 ) -> Flask:
     app = Flask(__name__, static_folder=None)
     app.logger.setLevel(logging.INFO)
@@ -62,6 +63,7 @@ def create_app(
         qwen_model_path=qwen_model_path,
         qwen_host=qwen_host,
         qwen_port=qwen_port,
+        qwen_pool=qwen_pool,
     )
     app.config["AGGREGATOR"] = aggregator
 
@@ -303,12 +305,14 @@ def main() -> int:
     parser.add_argument("--no-qwen", action="store_true", help="Disable Qwen-assisted parser repair / ambiguous judge.")
     parser.add_argument(
         "--qwen-model-path",
-        default="/Users/chrizantona/qwen/Qwen2.5-Coder-14B-Instruct-4bit",
+        default=str(Path("~/models/Qwen2.5-Coder-14B-Instruct-4bit").expanduser()),
     )
     parser.add_argument("--qwen-host", default="127.0.0.1")
     parser.add_argument("--qwen-port", type=int, default=8765)
+    parser.add_argument("--qwen-pool", help="Comma-separated Qwen ports, e.g. 8765,8766,8767.")
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
+    qwen_pool = parse_qwen_pool(args.qwen_pool)
 
     # Camoufox/Firefox can't auth against SOCKS5 directly. autostart_proxy_bridges
     # spawns one `gost` per upstream and rewrites OZON_PROXIES/OZON_PROXY_SCHEME
@@ -336,6 +340,7 @@ def main() -> int:
         qwen_model_path=args.qwen_model_path,
         qwen_host=args.qwen_host,
         qwen_port=args.qwen_port,
+        qwen_pool=qwen_pool,
     )
     # NOTE: cannot pre-warm Ozon client here — Playwright's sync API binds
     # the browser to its creator thread, and Flask request handlers run in
@@ -346,6 +351,24 @@ def main() -> int:
     print(f"EasyTender aggregator listening on http://{args.host}:{args.port}", flush=True)
     app.run(host=args.host, port=args.port, debug=args.debug, threaded=True)
     return 0
+
+
+def parse_qwen_pool(raw: str | None) -> list[int] | None:
+    if not raw:
+        return None
+    ports: list[int] = []
+    for token in raw.split(","):
+        token = token.strip()
+        if not token:
+            continue
+        try:
+            port = int(token)
+        except ValueError as exc:
+            raise SystemExit(f"bad --qwen-pool port: {token!r}") from exc
+        if port <= 0 or port > 65535:
+            raise SystemExit(f"bad --qwen-pool port: {port}")
+        ports.append(port)
+    return list(dict.fromkeys(ports)) or None
 
 
 if __name__ == "__main__":

@@ -30,6 +30,95 @@ Docker-запуск:
 docker compose up --build
 ```
 
+## Запуск Qwen + Flask
+
+Один Qwen:
+
+```bash
+pkill -f "mlx_lm.server"
+pkill -f "app.server"
+
+cd ~/code/easytenderhack2026
+
+.venv/bin/python -m mlx_lm.server \
+  --model ~/models/Qwen2.5-Coder-14B-Instruct-4bit \
+  --host 127.0.0.1 --port 8765 > /tmp/qwen_8765.log 2>&1 &
+
+sleep 25
+
+.venv/bin/python -m app.server > /tmp/flask.log 2>&1 &
+```
+
+Два Qwen:
+
+```bash
+pkill -f "mlx_lm.server"
+pkill -f "app.server"
+
+cd ~/code/easytenderhack2026
+
+.venv/bin/python -m mlx_lm.server \
+  --model ~/models/Qwen2.5-Coder-14B-Instruct-4bit \
+  --host 127.0.0.1 --port 8765 > /tmp/qwen_8765.log 2>&1 &
+
+.venv/bin/python -m mlx_lm.server \
+  --model ~/models/Qwen2.5-Coder-14B-Instruct-4bit \
+  --host 127.0.0.1 --port 8766 > /tmp/qwen_8766.log 2>&1 &
+
+sleep 35
+
+.venv/bin/python -m app.server --qwen-pool 8765,8766 > /tmp/flask.log 2>&1 &
+```
+
+Три Qwen:
+
+```bash
+pkill -f "mlx_lm.server"
+pkill -f "app.server"
+
+cd ~/code/easytenderhack2026
+
+for PORT in 8765 8766 8767; do
+  .venv/bin/python -m mlx_lm.server \
+    --model ~/models/Qwen2.5-Coder-14B-Instruct-4bit \
+    --host 127.0.0.1 --port $PORT > /tmp/qwen_${PORT}.log 2>&1 &
+done
+
+sleep 45
+
+.venv/bin/python -m app.server --qwen-pool 8765,8766,8767 > /tmp/flask.log 2>&1 &
+```
+
+Проверка:
+
+```bash
+for PORT in 8765 8766 8767; do
+  curl -s --max-time 2 -o /dev/null -w "  :$PORT -> HTTP %{http_code}\n" http://127.0.0.1:$PORT/v1/models
+done
+
+curl -s http://127.0.0.1:8770/api/health \
+  | python -m json.tool \
+  | grep -iE "status|qwen_pool|qwen_avail|other_runet_enabled|ozon_enabled"
+```
+
+В норме `status` равен `ok`, `qwen_available` равен `true`, а `qwen_pool_alive` показывает количество живых Qwen-инстансов.
+
+Остановить всё:
+
+```bash
+pkill -f "mlx_lm.server"
+pkill -f "app.server"
+```
+
+Логи:
+
+```bash
+tail -f /tmp/flask.log
+tail -f /tmp/qwen_8765.log
+tail -f /tmp/qwen_8766.log
+tail -f /tmp/qwen_8767.log
+```
+
 ## Локальная Модель Для Проверки Карточек
 
 Дополнительный слой обработки карточек вынесен в `qwen_product_ranker.py`.
@@ -46,7 +135,7 @@ docker compose up --build
 Путь до локальной модели уже указан в коде:
 
 ```python
-QWEN_MODEL_PATH = Path("/Users/chrizantona/qwen/Qwen2.5-Coder-14B-Instruct-4bit")
+QWEN_MODEL_PATH = Path("~/models/Qwen2.5-Coder-14B-Instruct-4bit").expanduser()
 ```
 
 Запуск обработки карточек:
@@ -198,7 +287,7 @@ pytest
 ## Переменные Окружения
 
 ```bash
-QWEN_MODEL_PATH=/Users/chrizantona/qwen/Qwen2.5-Coder-14B-Instruct-4bit
+QWEN_MODEL_PATH=~/models/Qwen2.5-Coder-14B-Instruct-4bit
 OZON_PROXIES=host:port,host:port
 OZON_PROXY_DISABLE=1
 OZON_ENRICH_MAX=10

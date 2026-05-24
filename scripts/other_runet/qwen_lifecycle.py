@@ -15,7 +15,7 @@ from .qwen_client import DEFAULT_QWEN_HOST, DEFAULT_QWEN_PORT
 
 LOGGER = logging.getLogger("other_runet.qwen.lifecycle")
 
-DEFAULT_MODEL_PATH = Path("/Users/chrizantona/qwen/Qwen2.5-Coder-14B-Instruct-4bit")
+DEFAULT_MODEL_PATH = Path("~/models/Qwen2.5-Coder-14B-Instruct-4bit").expanduser()
 
 
 class QwenServer:

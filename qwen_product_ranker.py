@@ -22,7 +22,7 @@ except ImportError:
     requests = None
 
 
-QWEN_MODEL_PATH = Path("/Users/chrizantona/qwen/Qwen2.5-Coder-14B-Instruct-4bit")
+QWEN_MODEL_PATH = Path("~/models/Qwen2.5-Coder-14B-Instruct-4bit").expanduser()
 QWEN_HOST = "127.0.0.1"
 QWEN_PORT = 8765
 QWEN_MODEL_NAME = "qwen2.5-coder-14b-instruct-4bit"
@@ -638,4 +638,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

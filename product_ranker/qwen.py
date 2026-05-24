@@ -21,7 +21,7 @@ except ImportError:  # pragma: no cover - dry runs can work without requests.
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
 DEFAULT_MODEL = "qwen2.5-coder-14b-instruct-4bit"
-DEFAULT_MODEL_PATH = Path("/Users/chrizantona/qwen/Qwen2.5-Coder-14B-Instruct-4bit")
+DEFAULT_MODEL_PATH = Path("~/models/Qwen2.5-Coder-14B-Instruct-4bit").expanduser()
 
 
 @dataclass

@@ -48,7 +48,7 @@ except Exception as exc:
 
 try:
     from other_runet.search_parser import OtherRunetSearchParser
-    from other_runet.qwen_client import QwenClient
+    from other_runet.qwen_client import NullQwenClient, QwenClient, QwenPoolClient
     from other_runet.qwen_lifecycle import QwenServer, DEFAULT_MODEL_PATH as QWEN_DEFAULT_MODEL_PATH
     OTHER_RUNET_AVAILABLE = True
 except Exception as exc:
@@ -137,6 +137,7 @@ class Aggregator:
         qwen_model_path: str | None = None,
         qwen_host: str = "127.0.0.1",
         qwen_port: int = 8765,
+        qwen_pool: list[int] | tuple[int, ...] | None = None,
     ) -> None:
         self.timeout = timeout
         self.ozon_headless = ozon_headless
@@ -210,13 +211,21 @@ class Aggregator:
         self._qwen_model_path = qwen_model_path or str(QWEN_DEFAULT_MODEL_PATH) if OTHER_RUNET_AVAILABLE else None
         self._qwen_host = qwen_host
         self._qwen_port = qwen_port
+        self._qwen_pool = tuple(qwen_pool or (qwen_port,))
         self._qwen_server: QwenServer | None = None
-        self._qwen_client: QwenClient | None = None
+        self._qwen_client: Any = None
         self.other_runet_search: OtherRunetSearchParser | None = None
         if self.other_runet_enabled:
-            self._qwen_client = QwenClient(host=qwen_host, port=qwen_port)
+            if not self.qwen_enabled:
+                self._qwen_client = NullQwenClient()
+            elif len(self._qwen_pool) > 1:
+                self._qwen_client = QwenPoolClient(host=qwen_host, ports=list(self._qwen_pool))
+            else:
+                self._qwen_client = QwenClient(host=qwen_host, port=qwen_port)
             self.other_runet_search = OtherRunetSearchParser(qwen_client=self._qwen_client)
-            if self.qwen_enabled:
+            # Single-Qwen mode may start the local server. Pool mode expects the
+            # instances to be started by the deployment commands before Flask.
+            if self.qwen_enabled and len(self._qwen_pool) == 1:
                 try:
                     log_path = Path(os.environ.get("QWEN_SERVER_LOG", "qwen_server.log"))
                     self._qwen_server = QwenServer(
@@ -315,7 +324,17 @@ class Aggregator:
             pass
 
     def health(self) -> dict[str, Any]:
-        qwen_ok = bool(self._qwen_client and self._qwen_client.is_available())
+        if self._qwen_client is not None and hasattr(self._qwen_client, "health"):
+            qwen_health = self._qwen_client.health(force=True)
+        else:
+            qwen_ok = bool(self._qwen_client and self._qwen_client.is_available(force=True))
+            qwen_health = {
+                "qwen_available": qwen_ok,
+                "qwen_pool": list(self._qwen_pool),
+                "qwen_pool_alive": 1 if qwen_ok else 0,
+                "qwen_pool_total": len(self._qwen_pool),
+                "qwen_pool_alive_ports": [self._qwen_port] if qwen_ok else [],
+            }
         return {
             "status": "ok",
             "sources": list(SOURCE_KEYS),
@@ -331,9 +350,13 @@ class Aggregator:
             "other_runet_enabled": self.other_runet_enabled,
             "other_runet_error": self._other_runet_init_error,
             "qwen_enabled": self.qwen_enabled,
-            "qwen_available": qwen_ok,
+            "qwen_available": qwen_health["qwen_available"],
+            "qwen_pool": qwen_health["qwen_pool"],
+            "qwen_pool_alive": qwen_health["qwen_pool_alive"],
+            "qwen_pool_total": qwen_health["qwen_pool_total"],
+            "qwen_pool_alive_ports": qwen_health["qwen_pool_alive_ports"],
             "qwen_model_path": self._qwen_model_path,
-            "qwen_host": f"{self._qwen_host}:{self._qwen_port}",
+            "qwen_host": self._qwen_host,
         }
 
     def search(

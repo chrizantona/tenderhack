@@ -173,7 +173,7 @@ class OtherRunetSearchParser:
         stats.frontier_candidates = len(candidates)
 
         emit_state = _EmitState(limit=limit)
-        qwen_lock = threading.Lock()
+        qwen_lock = None if getattr(self.qwen, "parallel_safe", False) else threading.Lock()
 
         per_candidate_budget = 22.0
         worker_pool = ThreadPoolExecutor(max_workers=min(self.max_workers, max(1, len(candidates))))
@@ -355,7 +355,7 @@ class OtherRunetSearchParser:
         *,
         passport: ProductPassport,
         region: RegionContext,
-        qwen_lock: threading.Lock,
+        qwen_lock: threading.Lock | None,
         emit_state: "_EmitState",
         item_callback: Callable[[dict[str, Any], int], None] | None,
         stats: SearchStats,
@@ -369,7 +369,18 @@ class OtherRunetSearchParser:
             stats.live_refreshed += 1
         if context.sold.needs_review:
             budget = QwenBudget(max_calls_per_search=1)
-            with qwen_lock:
+            if qwen_lock is not None:
+                with qwen_lock:
+                    upgraded = maybe_assist_sold_object(
+                        context.sold,
+                        candidate_title=context.offer.title or "",
+                        breadcrumbs=context.offer.breadcrumbs,
+                        description=context.offer.description,
+                        passport=passport,
+                        client=self.qwen,
+                        budget=budget,
+                    )
+            else:
                 upgraded = maybe_assist_sold_object(
                     context.sold,
                     candidate_title=context.offer.title or "",
