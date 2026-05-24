@@ -301,7 +301,10 @@ def main() -> int:
     )
     parser.add_argument("--no-other-runet", action="store_true", help="Disable other_runet source.")
     parser.add_argument("--no-qwen", action="store_true", help="Disable Qwen-assisted parser repair / ambiguous judge.")
-    parser.add_argument("--qwen-model-path", default=os.environ.get("QWEN_MODEL_PATH"))
+    parser.add_argument(
+        "--qwen-model-path",
+        default="/Users/chrizantona/qwen/Qwen2.5-Coder-14B-Instruct-4bit",
+    )
     parser.add_argument("--qwen-host", default="127.0.0.1")
     parser.add_argument("--qwen-port", type=int, default=8765)
     parser.add_argument("--debug", action="store_true")

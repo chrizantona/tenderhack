@@ -1,4 +1,0 @@
-qwen_model_path = "/Users/YOU/models/Qwen2.5-Coder-14B-Instruct-4bit"
-qwen_host = "127.0.0.1"
-qwen_port = 8765
-

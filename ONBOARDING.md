@@ -122,8 +122,8 @@ EasyTender aggregator listening on http://127.0.0.1:8770
 
 ```bash
 pip install mlx mlx-lm
-# Скачай модель в ~/models/Qwen2.5-Coder-14B-Instruct-4bit (~8 GB)
-# или укажи путь в QWEN_MODEL_PATH
+# Модель лежит тут:
+# /Users/chrizantona/qwen/Qwen2.5-Coder-14B-Instruct-4bit
 ```
 
 ---
@@ -151,7 +151,7 @@ pip install mlx mlx-lm
 | `OZON_ENRICH_MAX` | Сколько товаров Ozon обогащать через Camoufox при поиске | `10` |
 | `YM_PROXY` | Один прокси для Яндекс Маркета | first of `OZON_PROXIES` |
 | `YM_PROXY_DISABLE=1` | YM без прокси | (off) |
-| `QWEN_MODEL_PATH` | Путь к Qwen модели (для other_runet) | `~/models/Qwen2.5-Coder-14B-Instruct-4bit` |
+| `QWEN_MODEL_PATH` | Путь к Qwen модели (для other_runet) | `/Users/chrizantona/qwen/Qwen2.5-Coder-14B-Instruct-4bit` |
 | `QWEN_SERVER_LOG` | Куда писать лог Qwen-сервера | `qwen_server.log` |
 
 См. `.env.example` для шаблона.

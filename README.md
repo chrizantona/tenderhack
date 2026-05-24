@@ -32,7 +32,7 @@ docker compose up --build
 
 ## Локальная Модель Для Проверки Карточек
 
-Дополнительный слой обработки карточек находится в `product_ranker`.
+Дополнительный слой обработки карточек вынесен в `qwen_product_ranker.py`.
 
 Он принимает исходный запрос и список уже найденных карточек, после чего:
 
@@ -43,25 +43,24 @@ docker compose up --build
 - помечает подозрительно дешёвые и дорогие предложения;
 - сортирует карточки и отдаёт лучшие варианты.
 
-Путь до локальной модели задаётся через переменную окружения:
+Путь до локальной модели уже указан в коде:
 
-```bash
-export QWEN_MODEL_PATH="/Users/YOU/models/Qwen2.5-Coder-14B-Instruct-4bit"
+```python
+QWEN_MODEL_PATH = Path("/Users/chrizantona/qwen/Qwen2.5-Coder-14B-Instruct-4bit")
 ```
 
-Или через аргумент CLI:
+Запуск обработки карточек:
 
 ```bash
-python -m product_ranker.cli \
+python3 qwen_product_ranker.py \
   --query "iphone 15 128gb" \
-  --cards examples/cards.json \
-  --model-path "/Users/YOU/models/Qwen2.5-Coder-14B-Instruct-4bit"
+  --cards examples/cards.json
 ```
 
 Для проверки без запуска локальной модели:
 
 ```bash
-python -m product_ranker.cli \
+python3 qwen_product_ranker.py \
   --query "iphone 15 128gb" \
   --cards examples/cards.json \
   --no-qwen
@@ -180,7 +179,8 @@ app/                  backend server, aggregator, clustering
 frontend/             browser UI
 scripts/              marketplace parsers and CLI tools
 scripts/other_runet/  open web source, ranking, local model helpers
-product_ranker/       post-processing: validation, grouping, outliers, best offers
+qwen_product_ranker.py post-processing: validation, grouping, outliers, best offers
+product_ranker/       same logic split into package modules
 docs/                 technical notes and source research
 tests/                tests
 examples/             sample card payloads
@@ -190,14 +190,15 @@ examples/             sample card payloads
 
 ```bash
 python3 -m py_compile product_ranker/*.py
-python3 -m product_ranker.cli --query "iphone 15 128gb" --cards examples/cards.json --no-qwen
+python3 -m py_compile qwen_product_ranker.py
+python3 qwen_product_ranker.py --query "iphone 15 128gb" --cards examples/cards.json --no-qwen
 pytest
 ```
 
 ## Переменные Окружения
 
 ```bash
-QWEN_MODEL_PATH=/Users/YOU/models/Qwen2.5-Coder-14B-Instruct-4bit
+QWEN_MODEL_PATH=/Users/chrizantona/qwen/Qwen2.5-Coder-14B-Instruct-4bit
 OZON_PROXIES=host:port,host:port
 OZON_PROXY_DISABLE=1
 OZON_ENRICH_MAX=10
@@ -208,4 +209,3 @@ YM_PROXY_DISABLE=1
 ## Примечания
 
 Система работает с публично доступными storefront-данными и уже полученными карточками товаров. Если источник возвращает ограничение доступа, rate limit или challenge-страницу, это фиксируется в diagnostics и не маскируется как успешный результат.
-
