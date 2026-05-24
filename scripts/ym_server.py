@@ -1,0 +1,196 @@
+from __future__ import annotations
+
+import argparse
+import json
+from http import HTTPStatus
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from typing import Any
+from urllib.parse import parse_qs, urlparse
+
+import ym_common
+from ym_parser import YandexMarketClient, YandexMarketProductParser, YandexMarketSearchParser
+
+
+class YandexMarketParserServer:
+    def __init__(
+        self,
+        *,
+        transport: str = ym_common.DEFAULT_TRANSPORT,
+        impersonate: str = ym_common.DEFAULT_CURL_IMPERSONATE,
+        fingerprint_profile: str | None = None,
+        cookie_header: str | None = None,
+        cookie_file: str | None = None,
+    ) -> None:
+        client = YandexMarketClient(
+            transport=transport,
+            impersonate=impersonate,
+            fingerprint_profile=fingerprint_profile,
+            cookie_header=cookie_header,
+            cookie_file=cookie_file,
+        )
+        self.product_parser = YandexMarketProductParser(client=client)
+        self.search_parser = YandexMarketSearchParser(
+            client=client,
+            product_parser=self.product_parser,
+        )
+
+    def health(self) -> dict[str, Any]:
+        return {"status": "ok", "marketplace": "yandex_market"}
+
+    def search(self, params: dict[str, list[str]]) -> dict[str, Any]:
+        query = required_param(params, "query")
+        limit = int_param(params, "limit", 10)
+        page = int_param(params, "page", 1)
+        region_name = str_param(params, "region_name", "RU/Moscow")
+        region_id = optional_int_param(params, "region_id")
+        enrich = bool_param(params, "enrich", False)
+        enrich_limit = optional_int_param(params, "enrich_limit")
+        return self.search_parser.search(
+            query,
+            page=page,
+            limit=limit,
+            region_name=region_name,
+            region_id=region_id,
+            enrich=enrich,
+            enrich_limit=enrich_limit,
+        )
+
+    def product(self, params: dict[str, list[str]]) -> dict[str, Any]:
+        product_id_or_url = first_present(params, ("id", "model_id", "sku", "url", "product_id_or_url"))
+        if not product_id_or_url:
+            raise ValueError("Missing required query parameter: id, model_id, sku, url, or product_id_or_url")
+        region_name = str_param(params, "region_name", "RU/Moscow")
+        region_id = optional_int_param(params, "region_id")
+        return self.product_parser.get_product(product_id_or_url, region_name=region_name, region_id=region_id)
+
+
+def make_handler(app: YandexMarketParserServer) -> type[BaseHTTPRequestHandler]:
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:
+            parsed = urlparse(self.path)
+            params = parse_qs(parsed.query)
+            try:
+                if parsed.path == "/health":
+                    send_json(self, app.health())
+                elif parsed.path == "/search":
+                    send_json(self, app.search(params))
+                elif parsed.path == "/product":
+                    send_json(self, app.product(params))
+                else:
+                    send_json(
+                        self,
+                        {"error": "not_found", "path": parsed.path},
+                        status=HTTPStatus.NOT_FOUND,
+                    )
+            except ValueError as exc:
+                send_json(self, {"error": "bad_request", "message": str(exc)}, status=HTTPStatus.BAD_REQUEST)
+            except Exception as exc:
+                send_json(
+                    self,
+                    {"error": "internal_error", "message": str(exc)},
+                    status=HTTPStatus.INTERNAL_SERVER_ERROR,
+                )
+
+        def log_message(self, format: str, *args: Any) -> None:
+            return
+
+    return Handler
+
+
+def send_json(
+    handler: BaseHTTPRequestHandler,
+    payload: dict[str, Any],
+    *,
+    status: HTTPStatus = HTTPStatus.OK,
+) -> None:
+    body = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
+    handler.send_response(status)
+    handler.send_header("Content-Type", "application/json; charset=utf-8")
+    handler.send_header("Content-Length", str(len(body)))
+    handler.end_headers()
+    handler.wfile.write(body)
+
+
+def required_param(params: dict[str, list[str]], name: str) -> str:
+    value = str_param(params, name, "")
+    if not value:
+        raise ValueError(f"Missing required query parameter: {name}")
+    return value
+
+
+def str_param(params: dict[str, list[str]], name: str, default: str) -> str:
+    values = params.get(name)
+    if not values:
+        return default
+    return values[0]
+
+
+def int_param(params: dict[str, list[str]], name: str, default: int) -> int:
+    value = str_param(params, name, str(default))
+    try:
+        return int(value)
+    except ValueError as exc:
+        raise ValueError(f"Invalid integer query parameter {name}={value!r}") from exc
+
+
+def optional_int_param(params: dict[str, list[str]], name: str) -> int | None:
+    if name not in params:
+        return None
+    return int_param(params, name, 0)
+
+
+def bool_param(params: dict[str, list[str]], name: str, default: bool) -> bool:
+    value = str_param(params, name, str(default).lower()).lower()
+    return value in {"1", "true", "yes", "y", "on"}
+
+
+def first_present(params: dict[str, list[str]], names: tuple[str, ...]) -> str | None:
+    for name in names:
+        values = params.get(name)
+        if values and values[0]:
+            return values[0]
+    return None
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Yandex Market parser HTTP server.")
+    parser.add_argument("--host", default="127.0.0.1")
+    parser.add_argument("--port", type=int, default=8767)
+    parser.add_argument(
+        "--transport",
+        choices=("requests", "curl_cffi"),
+        default=ym_common.DEFAULT_TRANSPORT,
+        help="HTTP transport. curl_cffi enables browser-like TLS impersonation.",
+    )
+    parser.add_argument(
+        "--impersonate",
+        default=ym_common.DEFAULT_CURL_IMPERSONATE,
+        help="curl_cffi browser profile, e.g. chrome, chrome120, chrome124.",
+    )
+    parser.add_argument(
+        "--fingerprint-profile",
+        choices=ym_common.fingerprint_profile_names(),
+        help="Consistent preset for transport, TLS impersonation, User-Agent, and browser headers.",
+    )
+    parser.add_argument(
+        "--cookie-file",
+        help="Optional Playwright storage_state.json, Netscape cookies.txt, or raw Cookie header file.",
+    )
+    parser.add_argument("--cookie", help="Optional raw Cookie header for controlled experiments.")
+    args = parser.parse_args()
+
+    app = YandexMarketParserServer(
+        transport=args.transport,
+        impersonate=args.impersonate,
+        fingerprint_profile=args.fingerprint_profile,
+        cookie_header=args.cookie,
+        cookie_file=args.cookie_file,
+    )
+    server = ThreadingHTTPServer((args.host, args.port), make_handler(app))
+    print(f"Yandex Market parser server listening on http://{args.host}:{args.port}", flush=True)
+    server.serve_forever()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

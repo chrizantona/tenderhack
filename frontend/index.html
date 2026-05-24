@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EasyTender — поиск товаров</title>
+  <link rel="stylesheet" href="/static/style.css?v=modal5-filters4-clusters3-ozon-diag-proxy-silent-table-wb-enrich-debug-ym-first-enrich-all">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">EasyTender</div>
+    <div class="subtitle">Поиск товаров на маркетплейсах и в открытых источниках</div>
+    <button type="button" id="proxy-toggle" class="proxy-toggle is-loading" title="Прокси: загрузка…">
+      <span class="proxy-toggle-dot" aria-hidden="true"></span>
+      <span class="proxy-toggle-label">Прокси: …</span>
+    </button>
+  </header>
+
+  <main class="container">
+    <form id="search-form" class="search-form" autocomplete="off">
+      <input
+        id="query"
+        type="text"
+        aria-label="Поисковый запрос"
+        placeholder="Например: ноутбук, шорты мужские adidas, шина 205/55 R16"
+        required
+      />
+      <select id="region" aria-label="Регион">
+        <option value="moscow">Москва</option>
+      </select>
+      <button type="button" id="geo-btn" class="geo-btn" title="Определить геопозицию">Гео</button>
+      <label class="limit-field" for="limit">
+        <span>Товаров</span>
+        <input id="limit" type="number" min="1" max="100" step="1" value="10" inputmode="numeric" />
+      </label>
+      <button type="submit" id="search-btn">Найти</button>
+      <button type="button" id="stop-btn" class="stop-btn" disabled>Стоп</button>
+    </form>
+
+    <div class="sources-toggle" id="sources-toggle">
+      <label><input type="checkbox" value="yandex_market" checked> Я.Маркет</label>
+      <label><input type="checkbox" value="wildberries" checked> Wildberries</label>
+      <label><input type="checkbox" value="ozon" checked> Ozon</label>
+      <label><input type="checkbox" value="other_runet" checked> Прочие источники Рунета</label>
+    </div>
+
+    <div class="results-toolbar">
+      <label>
+        <span>Сортировка</span>
+        <select id="sort-by">
+          <option value="source">Как найдено</option>
+          <option value="price_asc">Цена ↑</option>
+          <option value="price_desc">Цена ↓</option>
+          <option value="delivery_asc">Доставка быстрее</option>
+          <option value="rating_desc">Оценка выше</option>
+          <option value="reviews_desc">Больше отзывов</option>
+          <option value="availability_desc">В наличии сначала</option>
+          <option value="seller_rating_desc">Рейтинг продавца выше</option>
+          <option value="title_asc">Название А-Я</option>
+        </select>
+      </label>
+      <div class="view-toggle" role="group" aria-label="Вид">
+        <button type="button" id="view-grid" class="view-btn active" data-view="grid">Сетка</button>
+        <button type="button" id="view-table" class="view-btn" data-view="table">Таблица</button>
+        <button type="button" id="view-groups" class="view-btn" data-view="groups">Группы</button>
+      </div>
+    </div>
+
+    <div id="meta" class="meta hidden"></div>
+    <section id="filters-panel" class="filters-panel hidden collapsed">
+      <div class="filters-panel-header">
+        <button type="button" id="filters-toggle-btn" class="filters-toggle-btn" aria-expanded="false">
+          <span class="filters-toggle-caret" aria-hidden="true">▸</span>
+          <span class="filters-panel-title">Сравнение фильтров</span>
+        </button>
+        <div class="filters-panel-status" id="filters-panel-status">—</div>
+      </div>
+      <div class="filters-panel-toolbar">
+        <label class="filters-scope-toggle">
+          <input type="checkbox" id="filters-scope-all" checked>
+          <span>Только общие для всех источников</span>
+        </label>
+      </div>
+      <div class="filters-panel-body" id="filters-panel-body"></div>
+    </section>
+    <div id="results" class="results"></div>
+
+    <div id="empty-state" class="empty-state">
+      Результаты появятся здесь.
+    </div>
+  </main>
+
+  <script src="/static/app.js?v=modal5-filters4-clusters3-ozon-diag-proxy-silent-table-wb-enrich-debug-ym-first-enrich-all"></script>
+</body>
+</html>

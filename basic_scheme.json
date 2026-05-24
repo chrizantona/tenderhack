@@ -1,0 +1,151 @@
+{
+  "schema_version": "0.2",
+  "marketplace": "wildberries",
+  "query": "шорты мужские adidas",
+  "external_id": "273639353",
+  "group_id": "252697495",
+  "variant_id": "273639353",
+  "offer_id": "422245516",
+  "url": "https://www.wildberries.ru/catalog/273639353/detail.aspx",
+  "title": "Шорты CLUB SHORT",
+  "normalized_title": "adidas club short shorts",
+  "description": "Описание товара, если источник его отдает",
+  "brand": {
+    "name": "adidas",
+    "external_id": "21"
+  },
+  "category": {
+    "name": "Шорты спортивные",
+    "external_id": "5267",
+    "parent_name": "Спортивная одежда",
+    "parent_external_id": "1513",
+    "path": [
+      "Спортивная одежда",
+      "Шорты спортивные"
+    ]
+  },
+  "price": {
+    "current": 3723,
+    "old": 4899,
+    "currency": "RUB",
+    "discount_percent": 24,
+    "source": "search",
+    "updated_at": "2026-05-20T12:00:00+03:00"
+  },
+  "rating": {
+    "value": 5,
+    "reviews_count": 101
+  },
+  "seller": {
+    "id": "1298825",
+    "name": "Wildberries",
+    "rating": 4.8
+  },
+  "availability": {
+    "status": "in_stock",
+    "quantity": 53,
+    "region": "RU/Moscow",
+    "warehouse_id": "507"
+  },
+  "delivery": {
+    "region": "RU/Moscow",
+    "time_min_hours": 2,
+    "time_max_hours": 21,
+    "price": 0,
+    "currency": "RUB"
+  },
+  "media": {
+    "main_image_url": "https://basket-17.wbbasket.ru/vol2736/part273639/273639353/images/big/1.webp",
+    "image_urls": [
+      "https://basket-17.wbbasket.ru/vol2736/part273639/273639353/images/big/1.webp"
+    ],
+    "photo_count": 8,
+    "has_video": false
+  },
+  "attributes": {
+    "raw": {
+      "Состав": "полиэтилентерефталат 100%",
+      "Цвет": "черный",
+      "Пол": "Мужской",
+      "Страна производства": "Вьетнам"
+    },
+    "normalized": {
+      "gender": "male",
+      "color": "black",
+      "country": "Vietnam",
+      "material": [
+        {
+          "name": "polyester",
+          "percent": 100
+        }
+      ],
+      "size": "56-58/9",
+      "memory_gb": null,
+      "model": "Club Short"
+    }
+  },
+  "match_keys": {
+    "brand": "adidas",
+    "model": "Club Short",
+    "manufacturer_part_number": null,
+    "vendor_code": "JF8499",
+    "barcode": null,
+    "color": "black",
+    "size": "56-58/9",
+    "semantic_key": "adidas club short black male shorts"
+  },
+  "marketplace_specific": {
+    "wildberries": {
+      "nm_id": 273639353,
+      "imt_id": 252697495,
+      "root": 252697495,
+      "match_id": 137511342,
+      "brand_id": 21,
+      "subject_id": 5267,
+      "subject_parent_id": 1513,
+      "supplier_id": 1298825,
+      "option_id": 422245516,
+      "chrt_ids": [
+        422245510,
+        422245518,
+        422245522,
+        422245508,
+        422245509,
+        422245512,
+        422245511,
+        422245507,
+        422245523,
+        422245516,
+        422245513,
+        422245514
+      ],
+      "basket_host": "basket-17.wbbasket.ru",
+      "warehouse_id": 507,
+      "dtype": 6597069766664,
+      "colors_nm_ids": [
+        273639435,
+        273639353,
+        273639432
+      ],
+      "full_colors_nm_ids": [
+        273639435,
+        273639353,
+        273639432
+      ]
+    }
+  },
+  "source_meta": {
+    "fetched_at": "2026-05-20T12:00:00+03:00",
+    "adapter": "wildberries",
+    "adapter_version": "0.1",
+    "endpoints": [
+      "u-search.wb.ru/exactmatch/ru/common/v18/search",
+      "wbbasket/info/ru/card.json"
+    ],
+    "region_params": {
+      "dest": "-1257786",
+      "currency": "rub"
+    }
+  },
+  "raw_data": {}
+}

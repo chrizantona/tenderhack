@@ -1,0 +1,58 @@
+{
+  "query": "iphone 15 128gb",
+  "cards": [
+    {
+      "marketplace": "wildberries",
+      "external_id": "wb-1",
+      "url": "https://example.test/wb-iphone-15",
+      "title": "Apple iPhone 15 128GB черный",
+      "brand": {"name": "Apple"},
+      "category": {"name": "Смартфоны"},
+      "price": {"current": 72990, "currency": "RUB"},
+      "rating": {"value": 4.8, "reviews_count": 124},
+      "seller": {"name": "Official Store", "rating": 4.9},
+      "availability": {"status": "in_stock"},
+      "attributes": {"normalized": {"memory_gb": 128, "color": "black"}}
+    },
+    {
+      "marketplace": "ozon",
+      "external_id": "ozon-1",
+      "url": "https://example.test/ozon-iphone-15",
+      "title": "Смартфон Apple iPhone 15 128 ГБ, Black",
+      "brand": {"name": "Apple"},
+      "category": {"name": "Мобильные телефоны"},
+      "price": {"current": 70500, "currency": "RUB"},
+      "rating": {"value": 4.7, "reviews_count": 88},
+      "seller": {"name": "Retail Partner"},
+      "availability": {"status": "in_stock"},
+      "attributes": {"normalized": {"memory_gb": 128, "color": "black"}}
+    },
+    {
+      "marketplace": "yandex_market",
+      "external_id": "ym-1",
+      "url": "https://example.test/ym-iphone-case",
+      "title": "Чехол для Apple iPhone 15 прозрачный",
+      "brand": {"name": "NoName"},
+      "category": {"name": "Чехлы"},
+      "price": {"current": 490, "currency": "RUB"},
+      "rating": {"value": 4.9, "reviews_count": 500},
+      "seller": {"name": "Accessory Shop"},
+      "availability": {"status": "in_stock"},
+      "attributes": {"normalized": {"color": "transparent"}}
+    },
+    {
+      "marketplace": "other_runet",
+      "external_id": "runet-1",
+      "url": "https://example.test/suspicious-iphone",
+      "title": "Apple iPhone 15 128GB новый",
+      "brand": {"name": "Apple"},
+      "category": {"name": "Смартфоны"},
+      "price": {"current": 19990, "currency": "RUB"},
+      "rating": {"value": 4.1, "reviews_count": 3},
+      "seller": {"name": "Unknown Seller"},
+      "availability": {"status": "in_stock"},
+      "attributes": {"normalized": {"memory_gb": 128}}
+    }
+  ]
+}
+

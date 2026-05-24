@@ -1,0 +1,15 @@
+.git
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.DS_Store
+.idea/
+.vscode/
+out/
+*.log
+yandex_market_example.html

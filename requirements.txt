@@ -1,0 +1,11 @@
+requests>=2.31.0
+curl_cffi>=0.7.0  # optional YM experiment: browser-like TLS impersonation
+selenium>=4.20.0
+undetected-chromedriver>=3.5.5
+setuptools>=70.0.0  # distutils compatibility for undetected-chromedriver on Python 3.12
+webdriver-manager>=4.0.1
+playwright>=1.45.0  # на будущее, если понадобится Playwright
+beautifulsoup4>=4.12.0  # для парсинга HTML
+lxml>=4.9.0  # парсер для BeautifulSoup
+flask>=3.0.0  # aggregator HTTP server
+camoufox>=0.4.11  # Ozon primary engine: headless Firefox-stealth

@@ -1,0 +1,25 @@
+services:
+  easytender:
+    build: .
+    ports:
+      - "8770:8770"
+    environment:
+      # Camoufox is the primary Ozon engine; chromium/chromedriver only used
+      # as Selenium fallback if camoufox init fails.
+      OZON_BROWSER_BINARY: ${OZON_BROWSER_BINARY:-}
+      OZON_CHROMEDRIVER: ${OZON_CHROMEDRIVER:-}
+      OZON_PROXIES: ${OZON_PROXIES:-}
+      OZON_PROXY_USER: ${OZON_PROXY_USER:-}
+      OZON_PROXY_PASS: ${OZON_PROXY_PASS:-}
+      OZON_PROXY_SCHEME: ${OZON_PROXY_SCHEME:-http}
+      # 0 = skip per-product browser enrichment on Ozon search (modal hits
+      # /api/product on-demand). Raise to enrich the first N products
+      # eagerly at the cost of +5-15s per item.
+      OZON_ENRICH_MAX: ${OZON_ENRICH_MAX:-0}
+      YM_PROXY: ${YM_PROXY:-}
+      YM_PROXY_DISABLE: ${YM_PROXY_DISABLE:-}
+    command: ["python3", "app/server.py", "--host", "0.0.0.0", "--port", "8770"]
+    # Camoufox + concurrent enrich workers can exhaust the default 64MB
+    # /dev/shm; 1GB matches what Playwright recommends for headless Firefox.
+    shm_size: "1gb"
+    restart: unless-stopped

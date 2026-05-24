@@ -1,0 +1,17 @@
+[project]
+name = "qwen-product-ranker-clean"
+version = "0.1.0"
+description = "Local Qwen product-card validator, category grouper, outlier remover, and ranker."
+requires-python = ">=3.11"
+dependencies = [
+  "requests>=2.31.0"
+]
+
+[project.optional-dependencies]
+qwen = [
+  "mlx-lm>=0.20.0"
+]
+
+[project.scripts]
+qwen-rank-products = "product_ranker.cli:main"
+
